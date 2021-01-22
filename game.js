@@ -8,6 +8,11 @@ const gameState = {
     gravity: 800,
   },
   score: 0,
+  gameOver: false,
+  rocketCount: 0,
+  cometCount: 0,
+  alienCount: 0,
+  pelletCount: 0,
 };
 
 const config = {
@@ -20,7 +25,7 @@ const config = {
       gravity: { y: gameState.gameOptions.gravity },
     },
   },
-  scene: [StartScene, GameScene],
+  scene: [StartScene, GameScene, EndScene],
 };
 
 const game = new Phaser.Game(config);

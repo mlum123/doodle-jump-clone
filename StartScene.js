@@ -1,7 +1,7 @@
-// StartScene that displays landing page / instructions
+// StartScene that displays landing page
 class StartScene extends Phaser.Scene {
   constructor() {
-    super({ key: "StartScene " });
+    super({ key: "StartScene" });
   }
 
   preload() {
