@@ -14,19 +14,10 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
+    // set game world bounds to be left part of screen
     this.physics.world.setBounds(0, 0, 550, 710);
 
-    // create player
-    gameState.player = this.physics.add
-      .sprite(100, 450, "astronaut")
-      .setScale(0.2);
-    gameState.player.setCollideWorldBounds(true);
-    gameState.player.setBounce(1);
-    gameState.player.body.checkCollision.up = false;
-    gameState.player.body.checkCollision.left = false;
-    gameState.player.body.checkCollision.right = false;
-
-    // create randomly placed platforms, with spacing that increases with score
+    // create randomly placed platforms
     gameState.platforms = this.physics.add.group({
       allowGravity: false,
       immovable: true,
@@ -34,7 +25,7 @@ class GameScene extends Phaser.Scene {
 
     for (let i = 0; i < 8; i++) {
       const randomX = Math.floor(Math.random() * 400) + 80;
-      gameState.platforms.create(randomX, i * 120, "star").setScale(0.3);
+      gameState.platforms.create(randomX, i * 130, "star").setScale(0.3);
     }
 
     // star platform going back and forth across the screen
@@ -47,6 +38,16 @@ class GameScene extends Phaser.Scene {
       .setScale(0.3)
       .setVelocityX(50)
       .setGravityY(0);
+
+    // create player
+    gameState.player = this.physics.add
+      .sprite(100, 450, "astronaut")
+      .setScale(0.2);
+    gameState.player.setCollideWorldBounds(true);
+    gameState.player.setBounce(1);
+    gameState.player.body.checkCollision.up = false;
+    gameState.player.body.checkCollision.left = false;
+    gameState.player.body.checkCollision.right = false;
 
     // player-platform collision
     this.physics.add.collider(gameState.player, gameState.platforms);
@@ -85,6 +86,7 @@ class GameScene extends Phaser.Scene {
       gameState.player.y > gameState.gameOptions.height - 100
     ) {
       gameState.gameOver = true;
+      gameState.gameOverMessage = "you fell and were lost to space";
     }
 
     // if game over, show end scene
@@ -108,7 +110,7 @@ class GameScene extends Phaser.Scene {
     if (gameState.player.body.touching.down) {
       gameState.player.setVelocityY(-500);
       gameState.score += 1;
-      this.cameras.main.shake(100, 0.004);
+      this.cameras.main.shake(100, 0.003);
     }
 
     // move platforms downward as player progresses upward
@@ -118,11 +120,12 @@ class GameScene extends Phaser.Scene {
 
     // if moving platform gets out of game boundaries, reverse its velocity
     gameState.platforms.children.iterate((platform) => {
-      if (platform.x > 550 || platform.x < 0) {
-        console.log(platform.body.velocity.x);
+      if (platform.x > 550) {
         platform.x = 549;
         platform.setVelocityX(-1 * platform.body.velocity.x);
-        console.log(platform.body.velocity.x);
+      } else if (platform.x < 0) {
+        platform.x = 1;
+        platform.setVelocityX(-1 * platform.body.velocity.x);
       }
     }, this);
 
@@ -154,70 +157,74 @@ class GameScene extends Phaser.Scene {
           "rocket"
         )
         .setScale(0.2)
-        .setGravityY(200);
+        .setGravityY(-700);
       gameState.rocketCount = 1;
     }
 
     if (gameState.rocket && gameState.score % 15 === 7) {
       gameState.rocketCount = 0;
-      gameState.player.setVelocityY(0);
     }
 
     // player-rocket collision, make player speed up
     this.physics.add.collider(gameState.player, gameState.rocket, () => {
       gameState.score += 5;
-      gameState.player.setBounce(3);
+      gameState.player.setVelocityY(-750);
     });
 
-    // every so often, send a comet down
-    if (
-      gameState.cometCount === 0 &&
-      gameState.score !== 0 &&
-      gameState.score % 8 === 0
-    ) {
-      gameState.comet = this.physics.add
-        .image(Math.floor(Math.random() * 400) + 50, 0, "comet")
-        .setScale(0.2)
-        .setGravityY(100);
-      gameState.cometCount = 1;
+    // only send hazardous things if not using rocket
+    if (gameState.rocketCount === 0) {
+      // every so often, send a comet down
+      if (
+        gameState.cometCount === 0 &&
+        gameState.score !== 0 &&
+        gameState.score % 8 === 0
+      ) {
+        gameState.comet = this.physics.add
+          .image(Math.floor(Math.random() * 400) + 50, 0, "comet")
+          .setScale(0.2)
+          .setGravityY(-100);
+        gameState.cometCount = 1;
+      }
+
+      if (gameState.comet && gameState.score % 8 === 5) {
+        gameState.cometCount = 0;
+      }
+
+      // player-comet collision, results in game over
+      this.physics.add.collider(gameState.player, gameState.comet, () => {
+        gameState.gameOver = true;
+        gameState.gameOverMessage = "oh no! you were hit by a comet";
+      });
+
+      // every so often, send an alien down
+      if (
+        gameState.alienCount === 0 &&
+        gameState.score !== 0 &&
+        gameState.score % 12 === 0
+      ) {
+        gameState.alien = this.physics.add
+          .image(Math.floor(Math.random() * 400) + 50, 50, "alien")
+          .setScale(0.1)
+          .setGravityY(-790);
+        gameState.alienCount = 1;
+      }
+
+      if (gameState.alien && gameState.score % 12 === 5) {
+        gameState.alienCount = 0;
+      }
+
+      // player-alien collision, results in game over
+      this.physics.add.collider(gameState.player, gameState.alien, () => {
+        gameState.gameOver = true;
+        gameState.gameOverMessage = "you collided with an alien — E.T.?";
+      });
     }
-
-    if (gameState.comet && gameState.score % 8 === 5) {
-      gameState.cometCount = 0;
-    }
-
-    // player-comet collision, results in game over
-    this.physics.add.collider(gameState.player, gameState.comet, () => {
-      gameState.gameOver = true;
-    });
-
-    // every so often, send an alien down
-    if (
-      gameState.alienCount === 0 &&
-      gameState.score !== 0 &&
-      gameState.score % 12 === 0
-    ) {
-      gameState.alien = this.physics.add
-        .image(Math.floor(Math.random() * 400) + 50, 0, "alien")
-        .setScale(0.1)
-        .setGravityY(50);
-      gameState.alienCount = 1;
-    }
-
-    if (gameState.alien && gameState.score % 12 === 5) {
-      gameState.alienCount = 0;
-    }
-
-    // player-alien collision, results in game over
-    this.physics.add.collider(gameState.player, gameState.alien, () => {
-      gameState.gameOver = true;
-    });
 
     // when player presses spacebar, aim pellet up
     if (gameState.pelletCount === 0 && gameState.cursors.space.isDown) {
       gameState.pellet = this.physics.add
         .image(gameState.player.x, gameState.player.y, "pellet")
-        .setScale(0.02)
+        .setScale(0.07)
         .setGravityY(-2000);
       gameState.pelletCount = 1;
     }
@@ -247,7 +254,7 @@ function updateY(platform) {
   }
 
   if (platform.y > gameState.gameOptions.height) {
-    platform.y = -(0.45 * platform.height);
+    platform.y = -(0.4 * platform.height);
     platform.x = Math.floor(Math.random() * 400) + 80;
   }
 }

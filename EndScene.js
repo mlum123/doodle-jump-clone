@@ -6,8 +6,12 @@ class EndScene extends Phaser.Scene {
 
   create() {
     // title text
-    this.add.text(560, 180, "game over!", {
+    this.add.text(560, 115, "game over!", {
       fontSize: "50px",
+      fontFamily: "Poppins, sans-serif",
+    });
+    this.add.text(553, 185, gameState.gameOverMessage, {
+      fontSize: "20px",
       fontFamily: "Poppins, sans-serif",
     });
     this.add.text(610, 250, `final score: ${gameState.score}`, {
