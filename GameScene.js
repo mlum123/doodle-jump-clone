@@ -37,6 +37,17 @@ class GameScene extends Phaser.Scene {
       gameState.platforms.create(randomX, i * 120, "star").setScale(0.3);
     }
 
+    // star platform going back and forth across the screen
+    gameState.platforms
+      .create(
+        Math.floor(Math.random() * 400) + 50,
+        Math.floor(Math.random() * 400),
+        "star"
+      )
+      .setScale(0.3)
+      .setVelocityX(50)
+      .setGravityY(0);
+
     // player-platform collision
     this.physics.add.collider(gameState.player, gameState.platforms);
 
@@ -105,6 +116,16 @@ class GameScene extends Phaser.Scene {
       gameState.platforms.children.iterate(updateY, this);
     }
 
+    // if moving platform gets out of game boundaries, reverse its velocity
+    gameState.platforms.children.iterate((platform) => {
+      if (platform.x > 550 || platform.x < 0) {
+        console.log(platform.body.velocity.x);
+        platform.x = 549;
+        platform.setVelocityX(-1 * platform.body.velocity.x);
+        console.log(platform.body.velocity.x);
+      }
+    }, this);
+
     // display score
     if (gameState.scoreDisplay !== undefined) {
       gameState.scoreDisplay.destroy();
@@ -133,7 +154,7 @@ class GameScene extends Phaser.Scene {
           "rocket"
         )
         .setScale(0.2)
-        .setGravityY(300);
+        .setGravityY(200);
       gameState.rocketCount = 1;
     }
 
@@ -144,7 +165,6 @@ class GameScene extends Phaser.Scene {
 
     // player-rocket collision, make player speed up
     this.physics.add.collider(gameState.player, gameState.rocket, () => {
-      console.log("hit");
       gameState.score += 5;
       gameState.player.setBounce(3);
     });
@@ -158,7 +178,7 @@ class GameScene extends Phaser.Scene {
       gameState.comet = this.physics.add
         .image(Math.floor(Math.random() * 400) + 50, 0, "comet")
         .setScale(0.2)
-        .setGravityY(200);
+        .setGravityY(100);
       gameState.cometCount = 1;
     }
 
@@ -198,7 +218,7 @@ class GameScene extends Phaser.Scene {
       gameState.pellet = this.physics.add
         .image(gameState.player.x, gameState.player.y, "pellet")
         .setScale(0.02)
-        .setGravityY(-1700);
+        .setGravityY(-2000);
       gameState.pelletCount = 1;
     }
 
